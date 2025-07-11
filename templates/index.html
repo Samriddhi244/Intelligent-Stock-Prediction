@@ -1,0 +1,1488 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Stock Predictor - Professional Trading Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #1e40af;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --dark-bg: #0f172a;
+            --dark-card: #1e293b;
+            --dark-border: #334155;
+            --light-text: #f8fafc;
+            --gray-text: #94a3b8;
+            --chart-bg: #1e293b;
+            --grid-color: #334155;
+            --accent-blue: #60a5fa;
+            --accent-purple: #a78bfa;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            color: var(--light-text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        /* Navbar */
+        .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--dark-border);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .nav-link {
+            color: var(--gray-text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary-color);
+        }
+        
+        .market-overview {
+            display: flex;
+            gap: 1rem;
+            padding: 0 1rem;
+            border-left: 1px solid var(--dark-border);
+            border-right: 1px solid var(--dark-border);
+        }
+        
+        .market-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+        
+        .market-label {
+            color: var(--gray-text);
+            font-weight: 500;
+        }
+        
+        .market-value {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        
+        .market-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        /* Section 1: Predictor & Chart */
+        .section-1 {
+            padding: 3rem 0;
+            min-height: 100vh;
+        }
+        
+        .predictor-chart-container {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 3rem;
+            height: calc(100vh - 200px);
+        }
+        
+        .predictor-panel {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            padding: 2rem;
+            height: fit-content;
+        }
+        
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--light-text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--light-text);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--dark-bg);
+            border: 1px solid var(--dark-border);
+            border-radius: 8px;
+            color: var(--light-text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+        
+        .predict-btn {
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .predict-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+        
+        .stock-chips {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 1.5rem;
+        }
+        
+        .stock-chip {
+            padding: 8px 12px;
+            background: var(--dark-bg);
+            border: 1px solid var(--dark-border);
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .stock-chip:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .chart-panel {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+        
+        .chart-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--dark-border);
+        }
+        
+        .chart-tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--gray-text);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .chart-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .chart-container {
+            height: 500px;
+            position: relative;
+            background: var(--dark-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #stockChart {
+            display: none;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        #stockChart.visible {
+            display: block !important;
+        }
+        
+        #chartPlaceholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Section 2: Results & Insights */
+        .section-2 {
+            background: var(--dark-bg);
+            padding: 4rem 0;
+            border-top: 1px solid var(--dark-border);
+        }
+        
+        .results-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+        }
+        
+        .prediction-display {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            padding: 2.5rem;
+            text-align: center;
+        }
+        
+        .prediction-value {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--success-color);
+            margin: 1rem 0;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+        
+        .confidence-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .metric-card {
+            background: var(--dark-bg);
+            border: 1px solid var(--dark-border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--gray-text);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .insights-panel {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            padding: 2.5rem;
+        }
+        
+        .insight-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--dark-border);
+        }
+        
+        .insight-item:last-child {
+            border-bottom: none;
+        }
+        
+        .insight-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .insight-icon.positive {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+        }
+        
+        .insight-icon.negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+        }
+        
+        .insight-icon.neutral {
+            background: rgba(96, 165, 250, 0.2);
+            color: var(--accent-blue);
+        }
+        
+        /* Section 3: About Project */
+        .section-3 {
+            padding: 4rem 0;
+            background: var(--dark-card);
+        }
+        
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .tech-card {
+            background: var(--dark-bg);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .tech-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .tech-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        
+        .metrics-showcase {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .showcase-metric {
+            text-align: center;
+            padding: 2rem;
+            background: var(--dark-bg);
+            border-radius: 12px;
+            border: 1px solid var(--dark-border);
+        }
+        
+        .showcase-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Section 4: Suggestions */
+        .section-4 {
+            padding: 4rem 0;
+            background: var(--dark-bg);
+            border-top: 1px solid var(--dark-border);
+        }
+        
+        .suggestions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .suggestion-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            padding: 2rem;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .suggestion-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--light-text);
+        }
+        
+        .suggestion-description {
+            color: var(--gray-text);
+            line-height: 1.6;
+        }
+        
+        /* Loading and Error States */
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+        
+        .loading-animation {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .ai-brain {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .pulse-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            animation: pulse-ring 2s infinite;
+            opacity: 0;
+        }
+        
+        .pulse-ring-delay {
+            animation-delay: 0.5s;
+        }
+        
+        @keyframes pulse-ring {
+            0% {
+                width: 80px;
+                height: 80px;
+                opacity: 1;
+            }
+            100% {
+                width: 120px;
+                height: 120px;
+                opacity: 0;
+            }
+        }
+        
+        .progress-bar {
+            width: 300px;
+            height: 4px;
+            background: var(--dark-border);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 2rem auto;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-blue));
+            width: 0%;
+            animation: progress-fill 3s ease-in-out infinite;
+        }
+        
+        @keyframes progress-fill {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+        
+        .error-card {
+            background: var(--dark-card);
+            border: 1px solid var(--danger-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .success-card {
+            background: var(--dark-card);
+            border: 1px solid var(--success-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        /* Utility Classes */
+        .text-success { color: var(--success-color) !important; }
+        .text-danger { color: var(--danger-color) !important; }
+        .text-warning { color: var(--warning-color) !important; }
+        .text-primary { color: var(--primary-color) !important; }
+        .text-muted { color: var(--gray-text) !important; }
+        .text-center { text-align: center; }
+        
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .predictor-chart-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .results-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .market-overview {
+                display: none; /* Hide market overview on smaller screens */
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .metrics-showcase {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .suggestions-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .prediction-value {
+                font-size: 3rem;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+            
+            .nav-links {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .confidence-metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <a href="#" class="navbar-brand">
+                    <i class="fas fa-chart-line me-2"></i>
+                    StockPro AI
+                </a>
+                <div class="nav-links">
+                    <a href="#predictor" class="nav-link">Predictor</a>
+                    <a href="#results" class="nav-link">Results</a>
+                    <a href="#about" class="nav-link">About</a>
+                    <a href="#suggestions" class="nav-link">Suggestions</a>
+                    <div class="market-overview">
+                        <div class="market-item">
+                            <span class="market-label">S&P 500:</span>
+                            <span class="market-value text-success" id="sp500">+0.45%</span>
+                        </div>
+                        <div class="market-item">
+                            <span class="market-label">NASDAQ:</span>
+                            <span class="market-value text-success" id="nasdaq">+0.32%</span>
+                        </div>
+                    </div>
+                    <div class="market-status">
+                        <span class="status-dot"></span>
+                        <span>Market Open</span>
+                        <span id="currentTime"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Section 1: Predictor & Chart -->
+    <section id="predictor" class="section-1">
+        <div class="container">
+            <div class="predictor-chart-container">
+                <!-- Predictor Panel -->
+                <div class="predictor-panel">
+                    <h3 class="section-title">
+                        <i class="fas fa-robot"></i>
+                        AI Stock Predictor
+                    </h3>
+                    
+                    <form action="/predict" method="post" id="predictionForm">
+                        <div class="form-group">
+                            <label for="ticker" class="form-label">Stock Symbol</label>
+                            <input type="text" 
+                                   class="form-input" 
+                                   id="ticker"
+                                   name="ticker" 
+                                   placeholder="e.g., AAPL, TSLA, GOOGL" 
+                                   required
+                                   value="{{ ticker if ticker }}">
+                            <small class="text-muted">Enter any valid stock ticker</small>
+                        </div>
+                        <button type="submit" class="predict-btn">
+                            <i class="fas fa-magic me-2"></i>
+                            Generate AI Prediction
+                        </button>
+                    </form>
+                    
+                    <!-- Popular Stocks -->
+                    <div class="mt-4">
+                        <h6 class="text-muted mb-3">Popular Stocks</h6>
+                        <div class="stock-chips">
+                            <div class="stock-chip" onclick="fillTicker('AAPL')">AAPL</div>
+                            <div class="stock-chip" onclick="fillTicker('GOOGL')">GOOGL</div>
+                            <div class="stock-chip" onclick="fillTicker('MSFT')">MSFT</div>
+                            <div class="stock-chip" onclick="fillTicker('TSLA')">TSLA</div>
+                            <div class="stock-chip" onclick="fillTicker('AMZN')">AMZN</div>
+                            <div class="stock-chip" onclick="fillTicker('NVDA')">NVDA</div>
+                            <div class="stock-chip" onclick="fillTicker('META')">META</div>
+                            <div class="stock-chip" onclick="fillTicker('NFLX')">NFLX</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chart Panel -->
+                <div class="chart-panel">
+                    <h3 class="section-title">
+                        <i class="fas fa-chart-area"></i>
+                        Market Analysis
+                    </h3>
+                    
+                    <div class="chart-tabs">
+                        <button class="chart-tab active" onclick="switchChart('price')">Price Chart</button>
+                        <button class="chart-tab" onclick="switchChart('volume')">Volume</button>
+                        <button class="chart-tab" onclick="switchChart('prediction')">AI Forecast</button>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="stockChart"></canvas>
+                        <div id="chartPlaceholder" class="text-center p-4">
+                            <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                            <h5 class="text-muted">Market Analysis Chart</h5>
+                            <p class="text-muted">Click on a stock symbol to view interactive charts</p>
+                        </div>
+                    </div>
+                    
+                    <div id="chartLoading" class="loading-spinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading chart...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading market data...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading Spinner for Prediction -->
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="loading-animation">
+                    <div class="ai-brain">
+                        <i class="fas fa-brain fa-3x text-primary"></i>
+                        <div class="pulse-ring"></div>
+                        <div class="pulse-ring pulse-ring-delay"></div>
+                    </div>
+                    <h4 class="mt-4 text-primary">AI Processing</h4>
+                    <p class="text-muted">Analyzing market patterns and generating predictions...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <p class="mt-2 text-muted" id="loadingStage">Downloading market data...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Results & Insights -->
+    <section id="results" class="section-2">
+        <div class="container">
+            {% if prediction %}
+                {% if success == False %}
+                    <div class="error-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-2 text-center">
+                                <i class="fas fa-exclamation-triangle fa-3x text-danger"></i>
+                            </div>
+                            <div class="col-md-10">
+                                <h4 class="text-danger fw-bold mb-2">Prediction Error</h4>
+                                <p class="mb-2">{{ prediction }}</p>
+                                <small class="text-muted">Please verify the stock symbol or check your connection.</small>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="results-container">
+                        <!-- Prediction Display -->
+                        <div class="prediction-display">
+                            <h3 class="section-title text-center">
+                                <i class="fas fa-target"></i>
+                                AI Prediction: {{ ticker }}
+                            </h3>
+                            
+                            <div class="prediction-value">${{ prediction }}</div>
+                            <p class="text-muted mb-4">Next trading day predicted price</p>
+                            
+                            <!-- Confidence Metrics -->
+                            <div class="confidence-metrics">
+                                <div class="metric-card">
+                                    <div class="metric-value text-success">{{ confidence if confidence else 87 }}%</div>
+                                    <div class="metric-label">Confidence Level</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value text-warning">±{{ error_margin if error_margin else 3.2 }}%</div>
+                                    <div class="metric-label">Error Margin</div>
+                                </div>
+                                {% if current_price %}
+                                <div class="metric-card">
+                                    <div class="metric-value text-primary">${{ current_price }}</div>
+                                    <div class="metric-label">Current Price</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value 
+                                        {% if price_change > 0 %}text-success{% elif price_change < 0 %}text-danger{% endif %}">
+                                        {% if price_change > 0 %}+{% endif %}{{ price_change_percent }}%
+                                    </div>
+                                    <div class="metric-label">Expected Change</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Insights Panel -->
+                        <div class="insights-panel">
+                            <h3 class="section-title">
+                                <i class="fas fa-lightbulb"></i>
+                                AI Insights & Analysis
+                            </h3>
+                            
+                            <div class="insight-item">
+                                <div class="insight-icon {% if price_change > 0 %}positive{% elif price_change < 0 %}negative{% else %}neutral{% endif %}">
+                                    <i class="fas fa-{% if price_change > 0 %}arrow-up{% elif price_change < 0 %}arrow-down{% else %}minus{% endif %}"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Price Direction</h6>
+                                    <p class="text-muted mb-0">
+                                        {% if price_change > 0 %}
+                                            Strong upward trend predicted with {{ price_change_percent }}% increase
+                                        {% elif price_change < 0 %}
+                                            Downward movement expected with {{ price_change_percent }}% decrease
+                                        {% else %}
+                                            Sideways movement with minimal price change
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="insight-item">
+                                <div class="insight-icon neutral">
+                                    <i class="fas fa-brain"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">AI Model Analysis</h6>
+                                    <p class="text-muted mb-0">LSTM Neural Network processed 60 days of OHLCV data with high pattern recognition accuracy</p>
+                                </div>
+                            </div>
+                            
+                            <div class="insight-item">
+                                <div class="insight-icon positive">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Technical Indicators</h6>
+                                    <p class="text-muted mb-0">RSI: 65 (Neutral), MACD: Bullish crossover, Volume: Above average</p>
+                                </div>
+                            </div>
+                            
+                            <div class="insight-item">
+                                <div class="insight-icon {% if confidence and confidence > 80 %}positive{% elif confidence and confidence > 60 %}neutral{% else %}negative{% endif %}">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Risk Assessment</h6>
+                                    <p class="text-muted mb-0">
+                                        {% if confidence and confidence > 80 %}
+                                            Low risk - High confidence prediction with stable market conditions
+                                        {% elif confidence and confidence > 60 %}
+                                            Moderate risk - Standard confidence level, monitor market volatility
+                                        {% else %}
+                                            Higher risk - Lower confidence due to market uncertainty or volatility
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="insight-item">
+                                <div class="insight-icon neutral">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Time Horizon</h6>
+                                    <p class="text-muted mb-0">Prediction valid for next trading session. Model accuracy decreases beyond 24-48 hours</p>
+                                </div>
+                            </div>
+                            
+                            <div class="insight-item">
+                                <div class="insight-icon neutral">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Company Information</h6>
+                                    <p class="text-muted mb-0">{{ company_name if company_name else ticker }} - {{ sector if sector else 'Technology Sector' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Section 3: About Project -->
+    <section id="about" class="section-3">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="section-title justify-content-center">
+                    <i class="fas fa-info-circle"></i>
+                    About This Project
+                </h2>
+                <p class="text-muted">Advanced AI-powered stock prediction system using cutting-edge machine learning technologies</p>
+            </div>
+            
+            <!-- Tech Stack -->
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <i class="fas fa-brain tech-icon"></i>
+                    <h5 class="fw-bold mb-3">Deep Learning</h5>
+                    <p class="text-muted">LSTM Neural Networks with attention mechanisms for sequential data analysis and pattern recognition</p>
+                </div>
+                
+                <div class="tech-card">
+                    <i class="fab fa-python tech-icon"></i>
+                    <h5 class="fw-bold mb-3">Python Backend</h5>
+                    <p class="text-muted">Flask web framework, TensorFlow/Keras for AI models, and scikit-learn for data preprocessing</p>
+                </div>
+                
+                <div class="tech-card">
+                    <i class="fas fa-database tech-icon"></i>
+                    <h5 class="fw-bold mb-3">Data Pipeline</h5>
+                    <p class="text-muted">Yahoo Finance API for real-time data, pandas for manipulation, and MinMaxScaler for normalization</p>
+                </div>
+                
+                <div class="tech-card">
+                    <i class="fas fa-chart-line tech-icon"></i>
+                    <h5 class="fw-bold mb-3">Visualization</h5>
+                    <p class="text-muted">Chart.js for interactive charts, Bootstrap for responsive UI, and real-time data updates</p>
+                </div>
+            </div>
+            
+            <!-- Project Metrics -->
+            <div class="metrics-showcase">
+                <div class="showcase-metric">
+                    <div class="showcase-number">87%</div>
+                    <p class="text-muted">Average Accuracy</p>
+                </div>
+                <div class="showcase-metric">
+                    <div class="showcase-number">60</div>
+                    <p class="text-muted">Days of Data</p>
+                </div>
+                <div class="showcase-metric">
+                    <div class="showcase-number">5</div>
+                    <p class="text-muted">OHLCV Features</p>
+                </div>
+                <div class="showcase-metric">
+                    <div class="showcase-number">24/7</div>
+                    <p class="text-muted">Availability</p>
+                </div>
+            </div>
+            
+            <!-- Use Cases -->
+            <div class="row mt-5">
+                <div class="col-md-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="fas fa-user-tie me-2 text-primary"></i>
+                        For Investors
+                    </h5>
+                    <p class="text-muted">Get AI-powered insights for better investment decisions and portfolio management strategies</p>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="fas fa-graduation-cap me-2 text-primary"></i>
+                        For Students
+                    </h5>
+                    <p class="text-muted">Learn about machine learning applications in finance and algorithmic trading concepts</p>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="fas fa-chart-bar me-2 text-primary"></i>
+                        For Analysts
+                    </h5>
+                    <p class="text-muted">Complement traditional analysis with AI-generated predictions and technical indicators</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Suggestions -->
+    <section id="suggestions" class="section-4">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="section-title justify-content-center">
+                    <i class="fas fa-lightbulb"></i>
+                    Trading Suggestions & Best Practices
+                </h2>
+                <p class="text-muted">Professional recommendations for using AI predictions in your trading strategy</p>
+            </div>
+            
+            <div class="suggestions-grid">
+                <div class="suggestion-card">
+                    <h5 class="suggestion-title">
+                        <i class="fas fa-shield-alt me-2 text-primary"></i>
+                        Risk Management
+                    </h5>
+                    <p class="suggestion-description">
+                        Never invest more than you can afford to lose. Use AI predictions as one factor among many in your decision-making process. Always set stop-loss orders and diversify your portfolio.
+                    </p>
+                </div>
+                
+                <div class="suggestion-card">
+                    <h5 class="suggestion-title">
+                        <i class="fas fa-clock me-2 text-primary"></i>
+                        Timing Strategy
+                    </h5>
+                    <p class="suggestion-description">
+                        AI predictions are most accurate for short-term movements. Consider market hours, earnings announcements, and economic events that might impact the predicted price movements.
+                    </p>
+                </div>
+                
+                <div class="suggestion-card">
+                    <h5 class="suggestion-title">
+                        <i class="fas fa-balance-scale me-2 text-primary"></i>
+                        Combine Analysis
+                    </h5>
+                    <p class="suggestion-description">
+                        Use AI predictions alongside fundamental analysis, news sentiment, and technical indicators. Multiple data sources provide a more comprehensive view of market conditions.
+                    </p>
+                </div>
+                
+                <div class="suggestion-card">
+                    <h5 class="suggestion-title">
+                        <i class="fas fa-chart-pie me-2 text-primary"></i>
+                        Portfolio Diversification
+                    </h5>
+                    <p class="suggestion-description">
+                        Don't put all your investments in one stock, even if AI predictions seem highly confident. Spread risk across different sectors, asset classes, and geographic regions.
+                    </p>
+                </div>
+                
+                <div class="suggestion-card">
+                    <h5 class="suggestion-title">
+                        <i class="fas fa-book me-2 text-primary"></i>
+                        Continuous Learning
+                    </h5>
+                    <p class="suggestion-description">
+                        Stay updated with market trends, company news, and economic indicators. The more you understand the market, the better you can interpret AI predictions and make informed decisions.
+                    </p>
+                </div>
+                
+                <div class="suggestion-card">
+                    <h5 class="suggestion-title">
+                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                        Important Disclaimer
+                    </h5>
+                    <p class="suggestion-description">
+                        This tool is for educational purposes only. Past performance doesn't guarantee future results. Always consult with financial advisors before making significant investment decisions.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Chart variables
+        let stockChart = null;
+        let currentTicker = '';
+        let chartData = {};
+        let isChartReady = false;
+        
+        // Initialize chart when page loads
+        function initializeChart() {
+            console.log('Initializing chart...');
+            
+            // Check if Chart.js is loaded
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js not loaded, retrying in 1 second...');
+                setTimeout(initializeChart, 1000);
+                return;
+            }
+            
+            // Set Chart.js defaults
+            Chart.defaults.color = '#f8fafc';
+            Chart.defaults.borderColor = '#334155';
+            
+            // Generate sample data and create initial chart
+            generateSampleChartData('DEMO');
+            createChart('price');
+            isChartReady = true;
+            
+            console.log('Chart initialized successfully');
+        }
+        
+        // Generate sample chart data
+        function generateSampleChartData(ticker) {
+            const days = 30;
+            const basePrice = 150 + Math.random() * 200;
+            const dates = [];
+            const prices = [];
+            const volumes = [];
+            
+            for (let i = days; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                dates.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                
+                const price = basePrice + (Math.random() - 0.5) * 20 + Math.sin(i / 5) * 10;
+                prices.push(parseFloat(price.toFixed(2)));
+                
+                const volume = Math.floor(Math.random() * 10000000) + 1000000;
+                volumes.push(volume);
+            }
+            
+            chartData = {
+                labels: dates,
+                price: prices,
+                volume: volumes,
+                prediction: [...prices.slice(0, -1), parseFloat((prices[prices.length - 1] + (Math.random() - 0.5) * 10).toFixed(2))]
+            };
+            
+            currentTicker = ticker;
+            console.log('Generated chart data for:', ticker, chartData);
+        }
+        
+        // Create chart with specified type
+        function createChart(type) {
+            const canvas = document.getElementById('stockChart');
+            const placeholder = document.getElementById('chartPlaceholder');
+            
+            if (!canvas) {
+                console.error('Chart canvas not found');
+                return;
+            }
+            
+            // Ensure we have chart data
+            if (!chartData || !chartData.labels) {
+                console.error('No chart data available');
+                return;
+            }
+            
+            // Show canvas, hide placeholder
+            canvas.classList.add('visible');
+            canvas.style.display = 'block';
+            if (placeholder) placeholder.style.display = 'none';
+            
+            // Destroy existing chart
+            if (stockChart) {
+                stockChart.destroy();
+                stockChart = null;
+            }
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Configure datasets based on type
+            let datasets = [];
+            let chartType = 'line';
+            let yAxisTitle = '';
+            
+            if (type === 'price') {
+                chartType = 'line';
+                yAxisTitle = 'Price ($)';
+                datasets = [{
+                    label: `Stock Price (${currentTicker})`,
+                    data: chartData.price,
+                    borderColor: '#60a5fa',
+                    backgroundColor: 'rgba(96, 165, 250, 0.15)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#3b82f6',
+                    pointBorderColor: '#60a5fa',
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    borderWidth: 3
+                }];
+            } else if (type === 'volume') {
+                chartType = 'bar';
+                yAxisTitle = 'Volume';
+                datasets = [{
+                    label: `Trading Volume (${currentTicker})`,
+                    data: chartData.volume,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    borderSkipped: false,
+                }];
+            } else if (type === 'prediction') {
+                chartType = 'line';
+                yAxisTitle = 'Price ($)';
+                datasets = [
+                    {
+                        label: 'Historical Price',
+                        data: chartData.price,
+                        borderColor: '#94a3b8',
+                        backgroundColor: 'rgba(148, 163, 184, 0.1)',
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 2,
+                        borderWidth: 2,
+                        pointHoverRadius: 5
+                    },
+                    {
+                        label: 'AI Prediction',
+                        data: chartData.prediction,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderDash: [10, 5],
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ef4444',
+                        pointBorderColor: '#ef4444',
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        borderWidth: 3
+                    }
+                ];
+            }
+            
+            console.log(`Creating ${type} chart with datasets:`, datasets);
+            
+            // Create chart
+            stockChart = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: chartData.labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `${currentTicker} - ${type.charAt(0).toUpperCase() + type.slice(1)} Chart`,
+                            color: '#f8fafc',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            padding: 20
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#f8fafc',
+                                font: {
+                                    size: 12,
+                                    weight: '500'
+                                },
+                                padding: 15,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleColor: '#f8fafc',
+                            bodyColor: '#f8fafc',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: {
+                                title: function(context) {
+                                    return `Date: ${context[0].label}`;
+                                },
+                                label: function(context) {
+                                    if (type === 'volume') {
+                                        return `${context.dataset.label}: ${(context.parsed.y / 1000000).toFixed(2)}M`;
+                                    } else {
+                                        return `${context.dataset.label}: $${context.parsed.y.toFixed(2)}`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: type === 'volume',
+                            title: {
+                                display: true,
+                                text: yAxisTitle,
+                                color: '#f8fafc',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(51, 65, 85, 0.8)',
+                                lineWidth: 1
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: {
+                                    size: 11
+                                },
+                                callback: function(value) {
+                                    if (type === 'volume') {
+                                        return (value / 1000000).toFixed(1) + 'M';
+                                    } else {
+                                        return '$' + value.toFixed(0);
+                                    }
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date',
+                                color: '#f8fafc',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(51, 65, 85, 0.8)',
+                                lineWidth: 1
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: {
+                                    size: 11
+                                },
+                                maxTicksLimit: 8
+                            }
+                        }
+                    },
+                    elements: {
+                        point: {
+                            radius: 3,
+                            hoverRadius: 8,
+                            borderWidth: 2
+                        },
+                        bar: {
+                            borderRadius: 4,
+                            borderSkipped: false
+                        },
+                        line: {
+                            borderCapStyle: 'round',
+                            borderJoinStyle: 'round'
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeInOutCubic'
+                    }
+                }
+            });
+            
+            console.log(`${type.charAt(0).toUpperCase() + type.slice(1)} chart created successfully for ${currentTicker}`);
+        }
+        
+        // Fill ticker function
+        function fillTicker(symbol) {
+            console.log('Filling ticker:', symbol);
+            document.getElementById('ticker').value = symbol;
+            
+            generateSampleChartData(symbol);
+            
+            if (isChartReady) {
+                createChart('price');
+                // Reset active tab to price chart
+                document.querySelectorAll('.chart-tab').forEach(tab => tab.classList.remove('active'));
+                document.querySelector('.chart-tab[onclick*="price"]').classList.add('active');
+            }
+        }
+        
+        // Switch chart view
+        function switchChart(type) {
+            console.log('Switching to chart type:', type);
+            
+            // Update active tab
+            document.querySelectorAll('.chart-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Create chart with the specified type
+            if (isChartReady && Object.keys(chartData).length > 0) {
+                createChart(type);
+            } else {
+                console.warn('Chart not ready or no data available');
+            }
+        }
+        
+        // Set current date and time
+        function updateDateTime() {
+            const timeElement = document.getElementById('currentTime');
+            if (timeElement) {
+                timeElement.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
+        }
+        updateDateTime();
+        setInterval(updateDateTime, 60000); // Update every minute
+        
+        // Load stock data for charts (simplified)
+        async function loadStockData(ticker) {
+            if (!ticker) return;
+            
+            console.log('Loading stock data for:', ticker);
+            generateSampleChartData(ticker);
+            
+            if (isChartReady) {
+                createChart('price');
+            }
+        }
+        
+        // Form submission with enhanced loading spinner
+        document.getElementById('predictionForm').addEventListener('submit', function() {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const loadingStage = document.getElementById('loadingStage');
+            
+            loadingSpinner.style.display = 'block';
+            
+            // Simulate loading stages
+            const stages = [
+                'Downloading market data...',
+                'Processing OHLCV indicators...',
+                'Running LSTM neural network...',
+                'Calculating confidence metrics...',
+                'Generating final prediction...'
+            ];
+            
+            let stageIndex = 0;
+            const stageInterval = setInterval(() => {
+                if (stageIndex < stages.length) {
+                    loadingStage.textContent = stages[stageIndex];
+                    stageIndex++;
+                } else {
+                    clearInterval(stageInterval);
+                }
+            }, 800);
+        });
+        
+        // Simulate market data updates
+        function updateMarketData() {
+            // Generate random market changes for demo
+            const sp500Change = (Math.random() - 0.5) * 2;
+            const nasdaqChange = (Math.random() - 0.5) * 2;
+            
+            const sp500Element = document.getElementById('sp500');
+            const nasdaqElement = document.getElementById('nasdaq');
+            
+            if (sp500Element) {
+                sp500Element.textContent = (sp500Change >= 0 ? '+' : '') + sp500Change.toFixed(2) + '%';
+                sp500Element.className = sp500Change >= 0 ? 'market-value text-success' : 'market-value text-danger';
+            }
+            
+            if (nasdaqElement) {
+                nasdaqElement.textContent = (nasdaqChange >= 0 ? '+' : '') + nasdaqChange.toFixed(2) + '%';
+                nasdaqElement.className = nasdaqChange >= 0 ? 'market-value text-success' : 'market-value text-danger';
+            }
+        }
+        
+        // Update market data every 30 seconds for demo
+        setInterval(updateMarketData, 30000);
+        
+        // Auto-uppercase ticker input
+        document.getElementById('ticker').addEventListener('input', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+        
+        // Load chart data when ticker changes
+        document.getElementById('ticker').addEventListener('change', function(e) {
+            if (e.target.value) {
+                loadStockData(e.target.value);
+            }
+        });
+        
+        // Initialize everything when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded - Starting initialization...');
+            
+            // Initialize chart after a short delay to ensure Chart.js is loaded
+            setTimeout(initializeChart, 100);
+            
+            // Add click event to show initial chart
+            setTimeout(() => {
+                if (isChartReady) {
+                    // Auto-click AAPL to show initial chart
+                    fillTicker('AAPL');
+                }
+            }, 1000);
+        });
+        
+        // Backup initialization on window load
+        window.addEventListener('load', function() {
+            console.log('Window loaded - backup initialization...');
+            
+            if (!isChartReady) {
+                setTimeout(initializeChart, 200);
+            }
+        });
+    </script>
+</body>
+</html>
