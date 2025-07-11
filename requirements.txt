@@ -6,3 +6,4 @@ numpy
 keras
 tensorflow==2.10.1
 werkzeug
+python==3.10.13
